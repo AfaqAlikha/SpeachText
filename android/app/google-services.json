@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "688026635349",
+    "project_id": "speechtext-1ea92",
+    "storage_bucket": "speechtext-1ea92.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:688026635349:android:d321cb6aa026214139d8dc",
+        "android_client_info": {
+          "package_name": "com.audionotes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_ogs9TJQB6MScbHgvHEK32XJkwjyVa6I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
