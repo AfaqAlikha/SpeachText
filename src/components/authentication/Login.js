@@ -59,6 +59,7 @@ const Login = ({navigation}) => {
         userRef.set({
           name: user.displayName,
           email: user.email,
+          phone: user.phoneNumber,
           profile_picture: user.photoURL,
         });
       }

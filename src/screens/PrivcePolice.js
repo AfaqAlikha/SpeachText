@@ -1,13 +1,12 @@
 import React from 'react';
-import { View } from 'react-native';
+import {Text, View} from 'react-native';
 
 function PrivcePolice() {
   return (
     <View>
-
+      <Text>PrivcePolice</Text>
     </View>
-  )
+  );
 }
 
-
-export default PrivcePolice
+export default PrivcePolice;

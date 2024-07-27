@@ -116,6 +116,7 @@ dependencies {
 implementation platform('com.google.firebase:firebase-bom:33.1.2')
 implementation 'com.google.firebase:firebase-analytics'
  implementation 'com.google.firebase:firebase-storage'
+   implementation 'com.razorpay:checkout:1.6.9' // Add this line
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
     } else {

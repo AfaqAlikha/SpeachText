@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 21,
     fontWeight: '700',
-    color: Colors.primary,
+    color: 'black',
     marginVertical: 10,
     padding: 10,
   },

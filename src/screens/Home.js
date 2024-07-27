@@ -8,6 +8,7 @@ import {
   StatusBar,
   Modal,
   Button,
+  Alert,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Voice from '@react-native-voice/voice';
@@ -16,6 +17,7 @@ import Colors from '../colors/Colors';
 import auth from '@react-native-firebase/auth';
 import database from '@react-native-firebase/database';
 import FastImage from 'react-native-fast-image';
+import RazorpayCheckout from 'react-native-razorpay';
 import {
   BannerAd,
   BannerAdSize,
@@ -34,8 +36,9 @@ const Home = ({navigation}) => {
   const [isRecording, setIsRecording] = useState(false);
   const [result, setResult] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
-  const [LoadedAdds, setLoadedAdds] = useState(false);
+  const [loadedAds, setLoadedAds] = useState(false);
   const [showContent, setShowContent] = useState(true);
+  const [isPremium, setIsPremium] = useState(false);
   const interstitialAd =
     InterstitialAd.createForAdRequest(interstitialAdUnitId);
 
@@ -47,24 +50,39 @@ const Home = ({navigation}) => {
       AdEventType.LOADED,
       () => {
         console.log('Interstitial ad loaded');
-        setLoadedAdds(true);
+        setLoadedAds(true);
       },
     );
 
     interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
       console.log('Interstitial ad closed');
-      setLoadedAdds(false);
+      setLoadedAds(false);
       navigation.navigate('Notes');
       setResult('');
     });
 
     interstitialAd.load();
 
+    checkUserPremiumStatus();
+
     return () => {
       Voice.destroy().then(Voice.removeAllListeners);
       unsubscribe();
     };
   }, []);
+
+  const checkUserPremiumStatus = async () => {
+    const user = auth().currentUser;
+    if (user) {
+      const userRef = database().ref('users/' + user.uid);
+      userRef.once('value', snapshot => {
+        const userData = snapshot.val();
+        if (userData && userData.userbuy === 'premium') {
+          setIsPremium(true);
+        }
+      });
+    }
+  };
 
   const onSpeechStart = e => {
     console.log('onSpeechStart: ', e);
@@ -114,10 +132,10 @@ const Home = ({navigation}) => {
 
   const handleSave = () => {
     saveResultToFirebase(result);
-    if (interstitialAd.loaded && LoadedAdds === true) {
+    if (interstitialAd.loaded && loadedAds === true && !isPremium) {
       interstitialAd.show();
     } else {
-      console.log('Ad not loaded');
+      console.log('Ad not loaded or user is premium');
       navigation.navigate('Notes');
     }
     setModalVisible(false);
@@ -128,15 +146,58 @@ const Home = ({navigation}) => {
     setResult('');
   };
 
+  const handleRazorpayCheckout = async () => {
+    const user = auth().currentUser;
+    if (user) {
+      const options = {
+        description: 'Upgrade to Premium',
+        image: 'https://your-logo-url.png',
+        currency: 'INR',
+        key: 'rzp_test_Fy1TuMX7NckOL8',
+        amount: '5000', // amount in paise
+        name: 'audionotes',
+        prefill: {
+          email: user.email,
+          contact: user.phoneNumber,
+          name: user.displayName,
+        },
+        theme: {color: Colors.primary},
+      };
+
+      RazorpayCheckout.open(options)
+        .then(data => {
+          // handle success
+          const userRef = database().ref('users/' + user.uid);
+          userRef.update({userbuy: 'premium'});
+          setIsPremium(true);
+        })
+        .catch(error => {
+          // handle failure
+          Alert('Payment failed');
+          // console.error('Payment failed: ', error);
+        });
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar backgroundColor={Colors.primary} />
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerText}>Voice To Text</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('VoiceRecord')}>
-            <Icon name="mic" size={28} color={Colors.primary} />
-          </TouchableOpacity>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 15}}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('VoiceRecord')}>
+              <Icon name="mic" size={28} color="#31c55e" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleRazorpayCheckout}>
+              {/* <Icon name="crown" size={28} color="#f5cd11" /> */}
+              <Image
+                source={ImagesAssets.king}
+                style={{width: 30, height: 30, tintColor: '#f5cd11'}}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {showContent && (
@@ -201,15 +262,17 @@ const Home = ({navigation}) => {
           </View>
         )}
 
-        <View style={styles.footer}>
-          <BannerAd
-            unitId={bannerAdUnitId}
-            size={BannerAdSize.FULL_BANNER}
-            requestOptions={{
-              requestNonPersonalizedAdsOnly: true,
-            }}
-          />
-        </View>
+        {!isPremium && (
+          <View style={styles.footer}>
+            <BannerAd
+              unitId={bannerAdUnitId}
+              size={BannerAdSize.FULL_BANNER}
+              requestOptions={{
+                requestNonPersonalizedAdsOnly: true,
+              }}
+            />
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -233,7 +296,7 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 21,
     fontWeight: '700',
-    color: Colors.primary,
+    color: 'black',
   },
   content: {
     flex: 1,
